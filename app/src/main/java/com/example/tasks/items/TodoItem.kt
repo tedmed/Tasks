@@ -13,6 +13,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,14 +29,18 @@ import androidx.compose.ui.unit.sp
 import com.example.tasks.R
 import com.example.tasks.data.Todo
 import com.example.tasks.helpers.DeleteTodoConfirmationDialog
+import com.example.tasks.viewmodel.SettingsViewModel
 import com.example.tasks.viewmodel.TodoViewModel
+import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 @Composable
-fun TodoItem(viewModel: TodoViewModel, todo: Todo) {
+fun TodoItem(todo: Todo, viewModel: TodoViewModel, settingsViewModel: SettingsViewModel = koinViewModel()) {
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val confirmDelete by settingsViewModel.confirmDelete.collectAsState()
+
     Row(modifier = Modifier
         .fillMaxWidth()
         .padding(4.dp)
@@ -50,21 +55,31 @@ fun TodoItem(viewModel: TodoViewModel, todo: Todo) {
             Text(text = todo.title, fontSize = 20.sp, color = Color.White)
             Text(text = SimpleDateFormat("M.dd.yyyy HH:mm:ss", Locale.ENGLISH).format(todo.createdAt), fontSize = 12.sp, color = Color.White)
         }
-        IconButton(onClick = {showDeleteConfirmDialog = true}) {
+        IconButton(onClick = {
+            if (confirmDelete) {
+                showDeleteConfirmDialog = true
+            } else {
+                viewModel.deleteTodo(todo.id)
+                Toast.makeText(context, "Todo deleted", Toast.LENGTH_SHORT).show()
+            }
+        }) {
             Icon(
                 painter = painterResource(id = R.drawable.baseline_delete_forever_24),
                 contentDescription = "Delete"
             )
         }
     }
-    if(showDeleteConfirmDialog){
-        DeleteTodoConfirmationDialog(todo.title, onConfirmDelete = {
-            viewModel.deleteTodo(todo.id)
-            showDeleteConfirmDialog = false
-        }, onDismiss = {
-            showDeleteConfirmDialog = false
-            Toast.makeText(context, "User canceled the deletion", Toast.LENGTH_SHORT).show();
-        })
-
+    if (showDeleteConfirmDialog) {
+        DeleteTodoConfirmationDialog(
+            todoTitle = todo.title,
+            onConfirmDelete = {
+                viewModel.deleteTodo(todo.id)
+                showDeleteConfirmDialog = false
+            },
+            onDismiss = {
+                showDeleteConfirmDialog = false
+                Toast.makeText(context, "User canceled the deletion", Toast.LENGTH_SHORT).show()
+            }
+        )
     }
 }

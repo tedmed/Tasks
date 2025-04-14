@@ -1,0 +1,54 @@
+package com.example.tasks.viewmodel
+
+import android.content.Context
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.tasks.repository.SettingsRepository
+import com.example.tasks.workers.ReminderScheduler
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class SettingsViewModel(
+    private val settingsRepository: SettingsRepository
+): ViewModel() {
+
+    val theme: StateFlow<String> = settingsRepository.getTheme()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "system")
+
+    val sortOrder: StateFlow<String> = settingsRepository.getSortOrder()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "newest")
+
+    val dailyReminderEnabled: StateFlow<Boolean> = settingsRepository.getDailyReminder()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val confirmDelete: StateFlow<Boolean> = settingsRepository.getConfirmDelete()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    fun updateTheme(theme: String) {
+        viewModelScope.launch {
+            settingsRepository.setTheme(theme)
+        }
+    }
+
+    fun updateSortOrder(sortOrder: String) {
+        viewModelScope.launch {
+            settingsRepository.setSortOrder(sortOrder)
+        }
+    }
+
+    fun updateDailyReminder(enabled: Boolean, context: Context) {
+        viewModelScope.launch {
+            settingsRepository.setDailyReminder(enabled)
+            if (enabled) ReminderScheduler.scheduleDailyReminder(context)
+            else ReminderScheduler.cancelDailyReminder(context)
+        }
+    }
+
+    fun updateConfirmDelete(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setConfirmDelete(enabled)
+        }
+    }
+}

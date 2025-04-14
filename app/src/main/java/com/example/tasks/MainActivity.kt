@@ -1,9 +1,13 @@
 package com.example.tasks
 
 import android.os.Bundle
+import android.Manifest
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import androidx.room.Index
@@ -37,23 +43,57 @@ import com.example.tasks.screens.DoneListScreen
 import com.example.tasks.screens.SettingsScreen
 import com.example.tasks.screens.TodoListScreen
 import com.example.tasks.ui.theme.TasksTheme
+import com.example.tasks.viewmodel.SettingsViewModel
 import com.example.tasks.viewmodel.TodoViewModel
+import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.context.startKoin
 
 class MainActivity : ComponentActivity() {
+    private val todoViewModel: TodoViewModel by viewModel()
+    private val settingsViewModel: SettingsViewModel by viewModel()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val todoViewModel = ViewModelProvider(this)[TodoViewModel::class.java]
+        startKoin{
+            androidContext(this@MainActivity)
+            modules(
+                roomDBModule,
+                settingsModule,
+                viewModelModule
+            )
+        }
         enableEdgeToEdge()
         setContent {
-            TasksTheme {
-                MainScreen(todoViewModel)
+            val theme by settingsViewModel.theme.collectAsState(initial = "system")
+            val isDarkTheme = when (theme) {
+                "light" -> false
+                "dark" -> true
+                else -> isSystemInDarkTheme()
             }
+            TasksTheme(darkTheme = isDarkTheme) {
+                MainScreen(todoViewModel, settingsViewModel)
+            }
+        }
+        val requestPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (!isGranted) {
+                Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 }
 
 @Composable
-fun MainScreen(todoViewModel: TodoViewModel) {
+fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewModel) {
     val navItems = listOf(
         BottomNavItem.TodoList,
         BottomNavItem.DoneList,
@@ -88,15 +128,15 @@ fun MainScreen(todoViewModel: TodoViewModel) {
                 }
             }
         }) { innerPadding ->
-        ContentScreen(modifier = Modifier.padding(innerPadding), selectedIndex, todoViewModel)
+        ContentScreen(modifier = Modifier.padding(innerPadding), selectedIndex, todoViewModel, settingsViewModel)
     }
 }
 
 @Composable
-fun ContentScreen(modifier: Modifier, selectedIndex: Int, todoViewModel: TodoViewModel){
+fun ContentScreen(modifier: Modifier, selectedIndex: Int, todoViewModel: TodoViewModel, settingsViewModel: SettingsViewModel){
     when(selectedIndex){
-        0-> TodoListScreen(todoViewModel)
-        1-> DoneListScreen(todoViewModel)
-        2-> SettingsScreen()
+        0-> TodoListScreen(todoViewModel, settingsViewModel)
+        1-> DoneListScreen(todoViewModel, settingsViewModel)
+        2-> SettingsScreen(settingsViewModel)
     }
 }

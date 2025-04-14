@@ -3,15 +3,16 @@ package com.example.tasks.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.tasks.MainApplication
 import com.example.tasks.data.Todo
+import com.example.tasks.db.TodoDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.Date
 
-class TodoViewModel: ViewModel() {
-    val todoDao = MainApplication.todoDatabase.getTodoDao()
+class TodoViewModel(
+    private val todoDao: TodoDao
+): ViewModel() {
     val todoList: LiveData<List<Todo>> = todoDao.getAllTodos()
     val doneList: LiveData<List<Todo>> = todoDao.getAllDone()
 
