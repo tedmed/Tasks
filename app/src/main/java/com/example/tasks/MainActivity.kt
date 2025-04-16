@@ -2,11 +2,13 @@ package com.example.tasks
 
 import android.os.Bundle
 import android.Manifest
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -37,10 +39,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.room.Index
 import com.example.tasks.consts.BottomNavItem
+import com.example.tasks.consts.Routes
+import com.example.tasks.screens.AddTodoScreen
 import com.example.tasks.screens.DoneListScreen
 import com.example.tasks.screens.SettingsScreen
+import com.example.tasks.screens.TodoDetailScreen
 import com.example.tasks.screens.TodoListScreen
 import com.example.tasks.ui.theme.TasksTheme
 import com.example.tasks.viewmodel.SettingsViewModel
@@ -94,33 +105,43 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewModel) {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
     val navItems = listOf(
         BottomNavItem.TodoList,
         BottomNavItem.DoneList,
         BottomNavItem.Settings
     )
-    var selectedIndex by remember {
-        mutableStateOf(0)
-    }
     val badgeCount = todoViewModel.todoList.observeAsState().value?.size
     Scaffold(modifier = Modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar {
-                navItems.forEachIndexed{ index, navItem ->
+                navItems.forEach{ navItem ->
                     NavigationBarItem(
-                        selected = selectedIndex == index,
-                        onClick = {selectedIndex = index},
+                        selected = currentRoute == navItem.screenRoute,
+                        onClick = {
+                            if (currentRoute != navItem.screenRoute) {
+                                navController.navigate(navItem.screenRoute) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
                         icon = {
                             BadgedBox(badge = {
                                 if (badgeCount != null) {
-                                    if(index ==0 && badgeCount > 0) {
-                                        Badge() {
+                                    if(navItem is BottomNavItem.TodoList && badgeCount > 0) {
+                                        Badge {
                                             Text(badgeCount.toString())
                                         }
                                     }
                                 }
                             }) {
-                                Icon(imageVector = navItem.icon, contentDescription = "Icon")
+                                Icon(imageVector = navItem.icon, contentDescription = navItem.title)
                             }
                        },
                         label = {Text(text = navItem.title)}
@@ -128,15 +149,30 @@ fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewMode
                 }
             }
         }) { innerPadding ->
-        ContentScreen(modifier = Modifier.padding(innerPadding), selectedIndex, todoViewModel, settingsViewModel)
-    }
-}
-
-@Composable
-fun ContentScreen(modifier: Modifier, selectedIndex: Int, todoViewModel: TodoViewModel, settingsViewModel: SettingsViewModel){
-    when(selectedIndex){
-        0-> TodoListScreen(todoViewModel, settingsViewModel)
-        1-> DoneListScreen(todoViewModel, settingsViewModel)
-        2-> SettingsScreen(settingsViewModel)
+        NavHost(
+            navController = navController,
+            startDestination = Routes.TodoList,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable(Routes.TodoList) {
+                TodoListScreen(todoViewModel, settingsViewModel, navController)
+            }
+            composable(Routes.DoneList) {
+                DoneListScreen(todoViewModel, navController, settingsViewModel)
+            }
+            composable(Routes.Settings) {
+                SettingsScreen(settingsViewModel)
+            }
+            composable(Routes.AddTodo) {
+                AddTodoScreen(todoViewModel, navController)
+            }
+            composable(
+                route = Routes.TodoDetail,
+                arguments = listOf(navArgument("todoId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val todoId = backStackEntry.arguments?.getInt("todoId") ?: return@composable
+                TodoDetailScreen(todoId, todoViewModel, navController)
+            }
+        }
     }
 }

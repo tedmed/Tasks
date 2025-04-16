@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.tasks.data.Todo
 import com.example.tasks.items.TodoItem
 import com.example.tasks.viewmodel.SettingsViewModel
@@ -29,7 +30,7 @@ import com.example.tasks.viewmodel.TodoViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun DoneListScreen(viewModel: TodoViewModel, settingsViewModel: SettingsViewModel = koinViewModel()){
+fun DoneListScreen(viewModel: TodoViewModel, navController: NavController, settingsViewModel: SettingsViewModel = koinViewModel()){
     val sortOrder by settingsViewModel.sortOrder.collectAsState()
     val doneList by viewModel.doneList.observeAsState()
 
@@ -51,7 +52,7 @@ fun DoneListScreen(viewModel: TodoViewModel, settingsViewModel: SettingsViewMode
             LazyColumn(content = {
                 itemsIndexed(it){
                         index: Int, item: Todo ->
-                    TodoItem(todo = item, viewModel = viewModel, settingsViewModel = settingsViewModel)
+                    TodoItem(todo = item, viewModel = viewModel, navController = navController, settingsViewModel = settingsViewModel)
                 }
             })
         }?: Text(text = "No todos yet")
