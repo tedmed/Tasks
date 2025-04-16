@@ -10,6 +10,9 @@ class SettingsRepository(private val dataStoreManager: DataStoreManager) {
     fun getSortOrder(): Flow<String> = dataStoreManager.getSortOrder()
     suspend fun setSortOrder(sortOrder: String) = dataStoreManager.setSortOrder(sortOrder)
 
+    fun getShowExpired(): Flow<Boolean> = dataStoreManager.getShowExpired()
+    suspend fun setShowExpired(value: Boolean) = dataStoreManager.setShowExpired(value)
+
     fun getDailyReminder(): Flow<Boolean> = dataStoreManager.getDailyReminder()
     suspend fun setDailyReminder(enabled: Boolean) = dataStoreManager.setDailyReminder(enabled)
 

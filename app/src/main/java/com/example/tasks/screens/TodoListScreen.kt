@@ -33,20 +33,9 @@ import com.example.tasks.viewmodel.TodoViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun TodoListScreen(viewModel: TodoViewModel, settingsViewModel: SettingsViewModel = koinViewModel(), navController: NavController){
-    val todoList by viewModel.todoList.observeAsState()
-    val sortOrder by settingsViewModel.sortOrder.collectAsState()
+fun TodoListScreen(viewModel: TodoViewModel, navController: NavController, settingsViewModel: SettingsViewModel = koinViewModel()){
     var btnClickable by remember { mutableStateOf(true) }
-
-    val sortedList = remember(todoList, sortOrder) {
-        todoList?.let {
-            when (sortOrder) {
-                "oldest" -> it.sortedBy { it.createdAt }
-                "alphabet" -> it.sortedBy { it.title.lowercase() }
-                else -> it.sortedByDescending { it.createdAt }
-            }
-        }
-    }
+    val sortedList by viewModel.sortedTodoList.collectAsState()
 
     Column(modifier = Modifier.fillMaxHeight()
         .padding(8.dp)
@@ -66,13 +55,14 @@ fun TodoListScreen(viewModel: TodoViewModel, settingsViewModel: SettingsViewMode
                 )
             }
         }
-        sortedList?.let {
+        sortedList.let {
             LazyColumn(content = {
                 itemsIndexed(it){
                         index: Int, item: Todo ->
                     TodoItem(todo = item, viewModel = viewModel, navController = navController, settingsViewModel = settingsViewModel)
                 }
             })
-        }?: Text(text = "No todos yet")
+        }
+        if(sortedList.isEmpty()) Text(text = "No todos yet")
     }
 }

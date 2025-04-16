@@ -25,6 +25,6 @@ val settingsModule = module {
 }
 
 val viewModelModule = module {
-    viewModel { TodoViewModel(get()) }
+    viewModel { TodoViewModel(get(), get()) }
     viewModel { SettingsViewModel(get()) }
 }

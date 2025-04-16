@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.example.tasks.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
@@ -24,6 +25,7 @@ import java.util.Locale
 fun SettingsScreen(settingsViewModel: SettingsViewModel = koinViewModel()){
     val theme by settingsViewModel.theme.collectAsState()
     val sortOrder by settingsViewModel.sortOrder.collectAsState()
+    val showExpired by settingsViewModel.showExpired.collectAsState()
     val dailyReminder by settingsViewModel.dailyReminderEnabled.collectAsState()
     val confirmDelete by settingsViewModel.confirmDelete.collectAsState()
     val context = LocalContext.current
@@ -51,7 +53,7 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel = koinViewModel()){
         // Sort Order Setting
         Text("Default Sort Order")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("newest", "oldest", "alphabet").forEach {
+            listOf("exp. soon", "exp. latest", "alphabet").forEach {
                 FilterChip(
                     selected = sortOrder == it,
                     onClick = { settingsViewModel.updateSortOrder(it) },
@@ -60,13 +62,24 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel = koinViewModel()){
             }
         }
 
-        // Daily Reminder Toggle
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Daily Reminder at 9:00", modifier = Modifier.weight(1f))
+            Text("Show Expired Todos", modifier = Modifier.weight(1f))
             Switch(
-                checked = dailyReminder,
-                onCheckedChange = { settingsViewModel.updateDailyReminder(it, context) }
+                checked = showExpired,
+                onCheckedChange = { settingsViewModel.updateShowExpired(it) }
             )
+        }
+
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            // Daily Reminder Toggle
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Daily Reminder at 9:00", modifier = Modifier.weight(1f))
+                Switch(
+                    checked = dailyReminder,
+                    onCheckedChange = { settingsViewModel.updateDailyReminder(it, context) }
+                )
+            }
         }
 
         // Confirm Delete Toggle

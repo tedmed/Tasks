@@ -18,7 +18,10 @@ class SettingsViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "system")
 
     val sortOrder: StateFlow<String> = settingsRepository.getSortOrder()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "newest")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "exp. soon")
+
+    val showExpired: StateFlow<Boolean> = settingsRepository.getShowExpired()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     val dailyReminderEnabled: StateFlow<Boolean> = settingsRepository.getDailyReminder()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
@@ -35,6 +38,12 @@ class SettingsViewModel(
     fun updateSortOrder(sortOrder: String) {
         viewModelScope.launch {
             settingsRepository.setSortOrder(sortOrder)
+        }
+    }
+
+    fun updateShowExpired(value: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setShowExpired(value)
         }
     }
 

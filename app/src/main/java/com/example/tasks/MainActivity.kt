@@ -52,6 +52,7 @@ import com.example.tasks.screens.AddTodoScreen
 import com.example.tasks.screens.DoneListScreen
 import com.example.tasks.screens.SettingsScreen
 import com.example.tasks.screens.TodoDetailScreen
+import com.example.tasks.screens.TodoEditScreen
 import com.example.tasks.screens.TodoListScreen
 import com.example.tasks.ui.theme.TasksTheme
 import com.example.tasks.viewmodel.SettingsViewModel
@@ -155,7 +156,7 @@ fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewMode
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Routes.TodoList) {
-                TodoListScreen(todoViewModel, settingsViewModel, navController)
+                TodoListScreen(todoViewModel, navController, settingsViewModel)
             }
             composable(Routes.DoneList) {
                 DoneListScreen(todoViewModel, navController, settingsViewModel)
@@ -172,6 +173,13 @@ fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewMode
             ) { backStackEntry ->
                 val todoId = backStackEntry.arguments?.getInt("todoId") ?: return@composable
                 TodoDetailScreen(todoId, todoViewModel, navController)
+            }
+            composable(
+                route = Routes.TodoEdit,
+                arguments = listOf(navArgument("todoId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val todoId = backStackEntry.arguments?.getInt("todoId") ?: return@composable
+                TodoEditScreen(todoId, todoViewModel, navController)
             }
         }
     }

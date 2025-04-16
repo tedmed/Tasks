@@ -3,9 +3,10 @@ package com.example.tasks.workers
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.example.tasks.R
@@ -41,8 +42,14 @@ class DailyReminderWorker(
             .setContentText("Don’t forget to review your tasks today!")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
-        with(NotificationManagerCompat.from(context)) {
-            notify(notificationId, builder.build())
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            with(NotificationManagerCompat.from(context)) {
+                notify(notificationId, builder.build())
+            }
+        } else {
+            // Optionally log or handle the lack of permission
+            Log.w("Notification", "Notification permission not granted")
         }
     }
 }
