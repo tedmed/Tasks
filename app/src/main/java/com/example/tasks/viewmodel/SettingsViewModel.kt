@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.tasks.repository.SettingsRepository
-import com.example.tasks.workers.ReminderScheduler
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -50,8 +49,8 @@ class SettingsViewModel(
     fun updateDailyReminder(enabled: Boolean, context: Context) {
         viewModelScope.launch {
             settingsRepository.setDailyReminder(enabled)
-            if (enabled) ReminderScheduler.scheduleDailyReminder(context)
-            else ReminderScheduler.cancelDailyReminder(context)
+            val sharedPrefs = context.getSharedPreferences("user_settings", Context.MODE_PRIVATE)
+            sharedPrefs.edit().putBoolean("daily_reminder", enabled).apply()
         }
     }
 

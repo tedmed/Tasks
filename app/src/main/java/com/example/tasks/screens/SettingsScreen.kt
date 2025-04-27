@@ -1,5 +1,12 @@
 package com.example.tasks.screens
 
+import android.app.AlarmManager
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -70,15 +77,26 @@ fun SettingsScreen(settingsViewModel: SettingsViewModel = koinViewModel()){
             )
         }
 
-        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) ==
-            android.content.pm.PackageManager.PERMISSION_GRANTED) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
             // Daily Reminder Toggle
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Daily Reminder at 9:00", modifier = Modifier.weight(1f))
+                Text("Allow TODO Notifications", modifier = Modifier.weight(1f))
                 Switch(
                     checked = dailyReminder,
-                    onCheckedChange = { settingsViewModel.updateDailyReminder(it, context) }
+                    onCheckedChange = {
+                        if (!alarmManager.canScheduleExactAlarms()) {
+                            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                            context.startActivity(intent)
+                        } else {
+                            settingsViewModel.updateDailyReminder(it, context)
+                        }
+                    }
                 )
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("To allow TODO notifications, enable notifications in settings first.", modifier = Modifier.weight(1f))
             }
         }
 

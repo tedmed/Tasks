@@ -2,53 +2,36 @@ package com.example.tasks
 
 import android.os.Bundle
 import android.Manifest
-import android.os.Build
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.room.Index
 import com.example.tasks.consts.BottomNavItem
 import com.example.tasks.consts.Routes
-import com.example.tasks.screens.AddTodoScreen
+import com.example.tasks.screens.TodoAddScreen
 import com.example.tasks.screens.DoneListScreen
 import com.example.tasks.screens.SettingsScreen
 import com.example.tasks.screens.TodoDetailScreen
@@ -114,7 +97,7 @@ fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewMode
         BottomNavItem.DoneList,
         BottomNavItem.Settings
     )
-    val badgeCount = todoViewModel.todoList.observeAsState().value?.size
+    val badgeCount = todoViewModel.sortedTodoList.collectAsState().value.size
     Scaffold(modifier = Modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar {
@@ -134,11 +117,9 @@ fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewMode
                         },
                         icon = {
                             BadgedBox(badge = {
-                                if (badgeCount != null) {
-                                    if(navItem is BottomNavItem.TodoList && badgeCount > 0) {
-                                        Badge {
-                                            Text(badgeCount.toString())
-                                        }
+                                if(navItem is BottomNavItem.TodoList && badgeCount > 0) {
+                                    Badge {
+                                        Text(badgeCount.toString())
                                     }
                                 }
                             }) {
@@ -165,7 +146,7 @@ fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewMode
                 SettingsScreen(settingsViewModel)
             }
             composable(Routes.AddTodo) {
-                AddTodoScreen(todoViewModel, navController)
+                TodoAddScreen(todoViewModel,settingsViewModel, navController)
             }
             composable(
                 route = Routes.TodoDetail,
@@ -179,7 +160,7 @@ fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewMode
                 arguments = listOf(navArgument("todoId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val todoId = backStackEntry.arguments?.getInt("todoId") ?: return@composable
-                TodoEditScreen(todoId, todoViewModel, navController)
+                TodoEditScreen(todoId, todoViewModel, settingsViewModel, navController)
             }
         }
     }

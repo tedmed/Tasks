@@ -27,9 +27,9 @@ fun TodoDetailScreen(
     viewModel: TodoViewModel,
     navController: NavController
 ) {
-    val todos by viewModel.todoList.observeAsState()
-    val dones by viewModel.doneList.observeAsState()
-    val todo = (todos.orEmpty() + dones.orEmpty()).find { it.id == todoId }
+    val todos by viewModel.todoList.collectAsState()
+    val dones by viewModel.doneList.collectAsState()
+    val todo = (todos + dones).find { it.id == todoId }
     var btnBackClickable by remember { mutableStateOf(true) }
     var btnEditClickable by remember { mutableStateOf(true) }
     val dateFormatter = SimpleDateFormat("d.M.yyyy HH:mm", Locale.ENGLISH)

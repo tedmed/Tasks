@@ -11,5 +11,6 @@ data class Todo(
     val title: String,
     val description: String,
     val deadline: Date,
-    val done: Boolean
+    val done: Boolean,
+    val reminderMinutesBefore: Int? = null
 )

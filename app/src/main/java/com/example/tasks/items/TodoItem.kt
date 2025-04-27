@@ -54,7 +54,7 @@ fun TodoItem(todo: Todo, viewModel: TodoViewModel, navController: NavController,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(modifier = Modifier.padding(8.dp), checked = todo.done, onCheckedChange = {
-            viewModel.updateTodo(todo.id, todo.title, todo.description, todo.deadline, !todo.done)
+            viewModel.markTodoDone(context, todo, !todo.done)
         })
         Column(modifier = Modifier.weight(1f)) {
             Text(text = todo.title, fontSize = 20.sp, color = Color.White)
@@ -64,7 +64,7 @@ fun TodoItem(todo: Todo, viewModel: TodoViewModel, navController: NavController,
             if (confirmDelete) {
                 showDeleteConfirmDialog = true
             } else {
-                viewModel.deleteTodo(todo.id)
+                viewModel.deleteTodo(context, todo.id)
                 Toast.makeText(context, "Todo deleted", Toast.LENGTH_SHORT).show()
             }
         }) {
@@ -166,7 +166,7 @@ fun TodoItem(todo: Todo, viewModel: TodoViewModel, navController: NavController,
         DeleteTodoConfirmationDialog(
             todoTitle = todo.title,
             onConfirmDelete = {
-                viewModel.deleteTodo(todo.id)
+                viewModel.deleteTodo(context, todo.id)
                 showDeleteConfirmDialog = false
             },
             onDismiss = {

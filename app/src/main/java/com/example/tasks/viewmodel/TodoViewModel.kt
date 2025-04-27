@@ -1,5 +1,6 @@
 package com.example.tasks.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
@@ -7,24 +8,27 @@ import androidx.lifecycle.viewModelScope
 import com.example.tasks.data.Todo
 import com.example.tasks.db.TodoDao
 import com.example.tasks.repository.SettingsRepository
+import com.example.tasks.workers.TodoReminderScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.Instant
 import java.util.Date
 
 class TodoViewModel(
     private val todoDao: TodoDao,
     private val settingsRepository: SettingsRepository
 ): ViewModel() {
-    val todoList: LiveData<List<Todo>> = todoDao.getAllTodos()
-    val doneList: LiveData<List<Todo>> = todoDao.getAllDone()
+    val todoList: StateFlow<List<Todo>> = todoDao.getAllTodos()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val doneList: StateFlow<List<Todo>> = todoDao.getAllDone()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sortedTodoList: StateFlow<List<Todo>> = combine(
-        todoDao.getAllTodos().asFlow(),
+        todoDao.getAllTodos(),
         settingsRepository.getSortOrder(),
         settingsRepository.getShowExpired()
     ) { todos, sortOrder, showExpired ->
@@ -37,7 +41,7 @@ class TodoViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val sortedDoneList: StateFlow<List<Todo>> = combine(
-        todoDao.getAllDone().asFlow(),
+        todoDao.getAllDone(),
         settingsRepository.getSortOrder()
     ) { dones, sortOrder ->
         when (sortOrder) {
@@ -47,27 +51,49 @@ class TodoViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun addTodo(title: String, description: String, deadline: Date){
+    fun addTodo(context: Context, title: String, description: String, deadline: Date, reminderMinutesBefore: Int?){
         viewModelScope.launch(Dispatchers.IO) {
-            todoDao.addTodo(Todo(title = title, description = description, deadline = deadline, done = false))
+            val todo = Todo(title = title, description = description, deadline = deadline, done = false, reminderMinutesBefore = reminderMinutesBefore)
+            val newId = todoDao.addTodo(todo).toInt()
+            reminderMinutesBefore?.let {
+                val reminderTime = Date(deadline.time - it * 60 * 1000)
+                TodoReminderScheduler.scheduleTodoReminder(context, newId, title, reminderTime)
+            }
         }
     }
 
-    fun deleteTodo(id: Int){
+    fun deleteTodo(context: Context, id: Int){
         viewModelScope.launch(Dispatchers.IO) {
             todoDao.deleteTodo(id)
+            TodoReminderScheduler.cancelTodoReminder(context, id)
         }
     }
 
-    fun updateTodo(id: Int, title: String, description: String, deadline: Date, done: Boolean){
+    fun updateTodo(context: Context, id: Int, title: String, description: String, deadline: Date, done: Boolean, reminderMinutesBefore: Int?){
         viewModelScope.launch(Dispatchers.IO) {
-            todoDao.updateTodo(Todo(id = id, title = title, description = description, deadline = deadline, done = done))
+            todoDao.updateTodo(Todo(id = id, title = title, description = description, deadline = deadline, done = done, reminderMinutesBefore = reminderMinutesBefore))
+            TodoReminderScheduler.cancelTodoReminder(context, id)
+            reminderMinutesBefore?.let {
+                val reminderTime = Date(deadline.time - it * 60 * 1000)
+                TodoReminderScheduler.scheduleTodoReminder(context, id, title, reminderTime)
+            }
         }
     }
 
-    fun markTodoDone(todo: Todo, done: Boolean){
+    fun markTodoDone(context: Context, todo: Todo, done: Boolean){
         viewModelScope.launch(Dispatchers.IO) {
-            todoDao.updateTodo(todo.copy(done = done))
+            val updatedTodo = todo.copy(done = done)
+            todoDao.updateTodo(updatedTodo)
+            if (done) {
+                // If user marks as DONE, cancel the reminder
+                TodoReminderScheduler.cancelTodoReminder(context, todo.id)
+            } else {
+                // If user UNMARKS, reschedule reminder (if it has a reminder)
+                updatedTodo.reminderMinutesBefore?.let { minutesBefore ->
+                    val reminderTime = Date(updatedTodo.deadline.time - minutesBefore * 60 * 1000)
+                    TodoReminderScheduler.scheduleTodoReminder(context, updatedTodo.id, updatedTodo.title, reminderTime)
+                }
+            }
         }
     }
 }
