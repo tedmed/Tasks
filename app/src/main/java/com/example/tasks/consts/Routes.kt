@@ -1,20 +1,20 @@
 package com.example.tasks.consts
 
 object Routes {
-    const val TodoList = "todoList"
-    const val AddTodo = "addTodo"
-    const val TodoDetail = "todoDetail/{todoId}"
-    const val TodoEdit = "todoDetail/{todoId}/edit"
-    const val DoneList = "doneList"
-    const val Settings = "settings"
+    const val TODO_LIST = "todoList"
+    const val ADD_TODO = "addTodo"
+    const val TODO_DETAIL = "todoDetail/{todoId}"
+    const val TODO_EDIT = "todoDetail/{todoId}/edit"
+    const val DONE_LIST = "doneList"
+    const val SETTINGS = "settings"
 
     //Funkce pro vytvoření routy s id
-    fun TodoDetail(todoId: Int): String {
+    fun todoDetail(todoId: Int): String {
         return "todoDetail/$todoId"
     }
 
     //Funkce pro vytvoření routy s id
-    fun TodoEdit(todoId: Int): String {
+    fun todoEdit(todoId: Int): String {
         return "todoDetail/$todoId/edit"
     }
 }

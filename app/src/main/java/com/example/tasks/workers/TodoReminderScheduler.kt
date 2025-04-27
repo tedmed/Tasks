@@ -1,48 +1,32 @@
 package com.example.tasks.workers
 
-import android.annotation.SuppressLint
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 import java.util.Date
+import java.util.concurrent.TimeUnit
 
 object TodoReminderScheduler {
     fun scheduleTodoReminder(context: Context, todoId: Int, todoTitle: String, reminderTime: Date) {
-        if (reminderTime.before(Date())) {
-            // Don't schedule past reminders
-            return
-        }
+        val delayMillis = reminderTime.time - System.currentTimeMillis()
+        if (delayMillis <= 0) return
 
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, TodoReminderReceiver::class.java).apply {
-            putExtra("todoId", todoId)
-            putExtra("todoTitle", todoTitle)
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            todoId,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        if(alarmManager.canScheduleExactAlarms()){
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                reminderTime.time,
-                pendingIntent
+        val workRequest = OneTimeWorkRequestBuilder<TodoReminderWorker>()
+            .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
+            .setInputData(
+                workDataOf(
+                    "todoId" to todoId,
+                    "todoTitle" to todoTitle
+                )
             )
-        }
+            .addTag("todo_reminder_$todoId")
+            .build()
+
+        WorkManager.getInstance(context).enqueue(workRequest)
     }
 
     fun cancelTodoReminder(context: Context, todoId: Int) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, TodoReminderReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            todoId,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        alarmManager.cancel(pendingIntent)
+        WorkManager.getInstance(context).cancelAllWorkByTag("todo_reminder_$todoId")
     }
 }

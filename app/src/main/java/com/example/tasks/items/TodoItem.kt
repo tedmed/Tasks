@@ -50,7 +50,7 @@ fun TodoItem(todo: Todo, viewModel: TodoViewModel, navController: NavController,
         .clip(RoundedCornerShape(16.dp))
         .background(MaterialTheme.colorScheme.primary)
         .padding(8.dp)
-        .clickable { navController.navigate(Routes.TodoDetail(todo.id)) },
+        .clickable { navController.navigate(Routes.todoDetail(todo.id)) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(modifier = Modifier.padding(8.dp), checked = todo.done, onCheckedChange = {
@@ -74,93 +74,6 @@ fun TodoItem(todo: Todo, viewModel: TodoViewModel, navController: NavController,
             )
         }
     }
-//
-//    val swipeState = rememberSwipeToDismissBoxState(
-//        positionalThreshold = { it }
-//    )
-//
-//    SwipeToDismissBox(
-//        state = swipeState,
-//        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-//        backgroundContent = {
-//            val direction = swipeState.dismissDirection
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxSize()
-//                    .clip(RoundedCornerShape(16.dp))
-//                    .background(
-//                        when (direction) {
-//                            SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
-//                            SwipeToDismissBoxValue.EndToStart -> Color(0xFFF44336)
-//                            else -> Color.Transparent
-//                        }
-//                    ),
-//                contentAlignment = when (direction) {
-//                    SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
-//                    SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
-//                    else -> Alignment.Center
-//                }
-//            ) {
-//                when (direction) {
-//                    SwipeToDismissBoxValue.StartToEnd -> {
-//                        Checkbox(
-//                            checked = todo.done,
-//                            onCheckedChange = {
-//                                viewModel.updateTodo(
-//                                    id = todo.id,
-//                                    title = todo.title,
-//                                    description = todo.description,
-//                                    createdAt = todo.createdAt,
-//                                    done = !todo.done
-//                                )
-//                                coroutineScope.launch { swipeState.reset() }
-//                            },
-//                            modifier = Modifier.padding(start = 16.dp)
-//                        )
-//                    }
-//
-//                    SwipeToDismissBoxValue.EndToStart -> {
-//                        IconButton(
-//                            onClick = {
-//                                if (confirmDelete) {
-//                                    showDeleteConfirmDialog = true
-//                                } else {
-//                                    viewModel.deleteTodo(todo.id)
-//                                    Toast.makeText(context, "Todo deleted", Toast.LENGTH_SHORT).show()
-//                                }
-//                                coroutineScope.launch { swipeState.reset() }
-//                            },
-//                            modifier = Modifier.padding(end = 16.dp)
-//                        ) {
-//                            Icon(
-//                                painter = painterResource(id = R.drawable.baseline_delete_forever_24),
-//                                contentDescription = "Delete",
-//                                tint = Color.White
-//                            )
-//                        }
-//                    }
-//
-//                    else -> {}
-//                }
-//            }
-//        }
-//    ) {
-//        Surface(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .clip(RoundedCornerShape(16.dp)),
-//            color = MaterialTheme.colorScheme.primary
-//        ) {
-//            Column(modifier = Modifier.padding(16.dp)) {
-//                Text(text = todo.title, fontSize = 20.sp, color = Color.White)
-//                Text(
-//                    text = SimpleDateFormat("M.dd.yyyy HH:mm:ss", Locale.ENGLISH).format(todo.createdAt),
-//                    fontSize = 12.sp,
-//                    color = Color.White
-//                )
-//            }
-//        }
-//    }
 
     if (showDeleteConfirmDialog) {
         DeleteTodoConfirmationDialog(

@@ -20,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavType
@@ -133,30 +132,30 @@ fun MainScreen(todoViewModel: TodoViewModel, settingsViewModel: SettingsViewMode
         }) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.TodoList,
+            startDestination = Routes.TODO_LIST,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Routes.TodoList) {
+            composable(Routes.TODO_LIST) {
                 TodoListScreen(todoViewModel, navController, settingsViewModel)
             }
-            composable(Routes.DoneList) {
+            composable(Routes.DONE_LIST) {
                 DoneListScreen(todoViewModel, navController, settingsViewModel)
             }
-            composable(Routes.Settings) {
+            composable(Routes.SETTINGS) {
                 SettingsScreen(settingsViewModel)
             }
-            composable(Routes.AddTodo) {
+            composable(Routes.ADD_TODO) {
                 TodoAddScreen(todoViewModel,settingsViewModel, navController)
             }
             composable(
-                route = Routes.TodoDetail,
+                route = Routes.TODO_DETAIL,
                 arguments = listOf(navArgument("todoId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val todoId = backStackEntry.arguments?.getInt("todoId") ?: return@composable
                 TodoDetailScreen(todoId, todoViewModel, navController)
             }
             composable(
-                route = Routes.TodoEdit,
+                route = Routes.TODO_EDIT,
                 arguments = listOf(navArgument("todoId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val todoId = backStackEntry.arguments?.getInt("todoId") ?: return@composable

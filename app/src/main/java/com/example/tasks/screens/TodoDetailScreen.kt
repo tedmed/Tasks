@@ -1,23 +1,16 @@
-// AddTodoScreen.kt
 package com.example.tasks.screens
 
-import android.icu.text.SymbolTable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.tasks.consts.Routes
 import com.example.tasks.viewmodel.TodoViewModel
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,7 +58,7 @@ fun TodoDetailScreen(
                         onClick = {
                             if (!btnEditClickable) return@Button
                             btnEditClickable = false
-                            navController.navigate(Routes.TodoEdit(todo.id))
+                            navController.navigate(Routes.todoEdit(todo.id))
                         },
                         enabled = btnEditClickable
                     ) {

@@ -1,9 +1,7 @@
 package com.example.tasks.viewmodel
 
 import android.content.Context
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import com.example.tasks.data.Todo
 import com.example.tasks.db.TodoDao
@@ -19,7 +17,7 @@ import java.util.Date
 
 class TodoViewModel(
     private val todoDao: TodoDao,
-    private val settingsRepository: SettingsRepository
+    settingsRepository: SettingsRepository
 ): ViewModel() {
     val todoList: StateFlow<List<Todo>> = todoDao.getAllTodos()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -85,10 +83,8 @@ class TodoViewModel(
             val updatedTodo = todo.copy(done = done)
             todoDao.updateTodo(updatedTodo)
             if (done) {
-                // If user marks as DONE, cancel the reminder
                 TodoReminderScheduler.cancelTodoReminder(context, todo.id)
             } else {
-                // If user UNMARKS, reschedule reminder (if it has a reminder)
                 updatedTodo.reminderMinutesBefore?.let { minutesBefore ->
                     val reminderTime = Date(updatedTodo.deadline.time - minutesBefore * 60 * 1000)
                     TodoReminderScheduler.scheduleTodoReminder(context, updatedTodo.id, updatedTodo.title, reminderTime)
